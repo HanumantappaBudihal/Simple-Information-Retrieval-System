@@ -1,8 +1,9 @@
 from util import *
+import nltk
+nltk.download("stopwords")
 
 # Add your import statements here
 # Varun Gumma
-
 
 
 class StopwordRemoval():
@@ -24,9 +25,9 @@ class StopwordRemoval():
 			representing a sentence with stopwords removed
 		"""
 
-		stopwordRemovedText = None
-
 		#Fill in code here
+		allStopwords = nltk.corpus.stopwords.words("english")
+		stopwordRemovedText = [[t for t in tokens if not t in allStopwords] for tokens in text]
 
 		return stopwordRemovedText
 

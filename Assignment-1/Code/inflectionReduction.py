@@ -1,4 +1,7 @@
 from util import *
+import nltk
+nltk.download("wordnet")
+nltk.download("omw-1.4")
 
 # Add your import statements here
 # Varun Gumma
@@ -24,9 +27,9 @@ class InflectionReduction:
 			stemmed/lemmatized tokens representing a sentence
 		"""
 
-		reducedText = None
-
 		#Fill in code here
+		lemmatizer = nltk.stem.WordNetLemmatizer()
+		reducedText = [[lemmatizer.lemmatize(t) for t in tokens] for tokens in text]
 		
 		return reducedText
 
