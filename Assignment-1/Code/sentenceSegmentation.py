@@ -1,10 +1,6 @@
 from util import *
-
-# Add your import statements here
-# Harsha Vardhan Gudivada
-
-
-
+from nltk.tokenize import sent_tokenize
+from nltk.tokenize import PunktSentenceTokenizer
 
 class SentenceSegmentation():
 
@@ -23,11 +19,10 @@ class SentenceSegmentation():
 			A list of strings where each string is a single sentence
 		"""
 
-		segmentedText = None
+		Sentences = None
+		Sentences= sent_tokenize(text)
 
-		#Fill in code here
-
-		return segmentedText
+		return Sentences
 
 
 
@@ -48,8 +43,7 @@ class SentenceSegmentation():
 			A list of strings where each strin is a single sentence
 		"""
 
-		segmentedText = None
+		Sentences = None
+		Sentences= PunktSentenceTokenizer().tokenize(text)
 
-		#Fill in code here
-		
-		return segmentedText
+		return Sentences
