@@ -1,53 +1,88 @@
+import unittest
 from util import *
 
 # Add your import statements here
 from nltk.tokenize import word_tokenize
 from nltk.tokenize import TreebankWordTokenizer
 
+
 class Tokenization():
 
-	def naive(self, text):
-		"""
-		Tokenization using a Naive Approach
+    def naive(self, text):
+        """
+        Tokenization using a Naive Approach
 
-		Parameters
-		----------
-		arg1 : list
-			A list of strings where each string is a single sentence
+        Parameters
+        ----------
+        arg1 : list
+                A list of strings where each string is a single sentence
 
-		Returns
-		-------
-		list
-			A list of lists where each sub-list is a sequence of tokens
-		"""
+        Returns
+        -------
+        list
+                A list of lists where each sub-list is a sequence of tokens
+        """
 
-		tokenizedText=[]
-    	
-		for sentence in text:
-			tokenizedText.append(word_tokenize(sentence))
+        tokenizedText = []
 
-		return tokenizedText
+        for sentence in text:
+            tokenizedText.append(word_tokenize(sentence))
+
+        return tokenizedText
+
+    def pennTreeBank(self, text):
+        """
+        Tokenization using the Penn Tree Bank Tokenizer
+
+        Parameters
+        ----------
+        arg1 : list
+                A list of strings where each string is a single sentence
+
+        Returns
+        -------
+        list
+                A list of lists where each sub-list is a sequence of tokens
+        """
+
+        tokenizedText = []
+
+        for sentence in text:
+            tokenizedText.append(TreebankWordTokenizer().tokenize(sentence))
+
+        return tokenizedText
 
 
 
-	def pennTreeBank(self, text):
-		"""
-		Tokenization using the Penn Tree Bank Tokenizer
+################################## Unit Testig #############################################
 
-		Parameters
-		----------
-		arg1 : list
-			A list of strings where each string is a single sentence
+class TokenizationTestMethods(unittest.TestCase):
 
-		Returns
-		-------
-		list
-			A list of lists where each sub-list is a sequence of tokens
-		"""
+    def test_naive(self):
+        # Arrange
+        text = ["There are multiple ways we can perform tokenization on given text data.",
+                "We can choose any method based on langauge, library and purpose of modeling."]
 
-		tokenizedText = []
+        excepted_result = [['There', 'are', 'multiple', 'ways', 'we', 'can', 'perform', 'tokenization', 'on', 'given', 'text', 'data.'],
+                           ['We', 'can', 'choose', 'any', 'method', 'based', 'on', 'langauge,', 'library', 'and', 'purpose', 'of', 'modeling.']]
+        # Act
+        actual_result = Tokenization().naive(text)
+        # Assestion
+        self.assertEqual(excepted_result, actual_result)
 
-		for sentence in text:
-			tokenizedText.append(TreebankWordTokenizer().tokenize(sentence))
+    def test_pennTreeBank(self):
+        # Arrange
+        text = ["Good muffins cost $3.88\nin New York.",
+                "Please buy me\ntwo of them.\nThanks."]
 
-		return tokenizedText
+        excepted_result = [['Good', 'muffins', 'cost', '$', '3.88', 'in', 'New', 'York.'],
+                           ['Please', 'buy', 'me', 'two', 'of', 'them.', 'Thanks', '.']]
+        # Act
+        actual_result = Tokenization().pennTreeBank(text)
+        # Assestion
+        self.assertEqual(excepted_result, actual_result)
+
+
+if __name__ == '__main__':
+    unittest.main()
+

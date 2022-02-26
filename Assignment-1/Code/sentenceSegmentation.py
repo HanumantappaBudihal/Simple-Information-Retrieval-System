@@ -50,11 +50,11 @@ class SentenceSegmentation():
 
 		return Sentences
 
-
 ################################## Unit Testig #############################################
 
 import unittest
-class sentenceSegmentaionTestMethods(unittest.TestCase):
+
+class SentenceSegmentationTestMethods(unittest.TestCase):
 
     def test_naive(self):
         # Arrange
@@ -66,17 +66,6 @@ class sentenceSegmentaionTestMethods(unittest.TestCase):
         actual_result = SentenceSegmentation().naive(text)
         # Assestion
         self.assertEqual(excepted_result, actual_result)
-
-        # text = '''(How does it deal with this parenthesis?)  "It should be part of the previous sentence." "(And the same with this one.)" ('And this one!') "('(And (this)) '?)" [(and this. )]'''
-        # excepted_result = ['(How does it deal with this parenthesis?)',
-        #                    '"It should be part of the previous sentence."',
-        #                    '"(And the same with this one.)"',
-        #                    "('And this one!')",
-        #                    "\"('(And (this)) '?)\"",
-        #                    '[(and this. )]' ]
-        # actual_result = ss.SentenceSegmentation().naive(text)
-        # # Assestion
-        # self.assertEqual(excepted_result, actual_result)
 
     def test_punkt(self):
         # Arrange
