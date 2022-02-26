@@ -19,14 +19,16 @@ class SentenceSegmentation():
 			A list of strings where each string is a single sentence
 		"""
 
-		Sentences = None
-		Sentences= sent_tokenize(text)
-
+		Sentences = []
+		partial_segmented = text.split('.')
+		
+		for j in partial_segmented : 
+			j_split = j.split('?')
+			for k in j_split :
+				k_split = k.split('!')
+				[Sentences.append(l.strip()) for l in k_split if not l.strip() == ""] 
+		
 		return Sentences
-
-
-
-
 
 	def punkt(self, text):
 		"""
