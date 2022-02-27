@@ -1,6 +1,8 @@
+import unittest
 from util import *
 import nltk
 nltk.download("stopwords")
+
 
 class StopwordRemoval():
 
@@ -30,20 +32,20 @@ class StopwordRemoval():
 
 ################################## Unit Testig #############################################
 
-import unittest
 
 class StopwordRemovalTestMethods(unittest.TestCase):
 
     def test_fromList(self):
         # Arrange
-        text = ["He determined to drop his litigation with the monastry, and relinguish his claims to the wood-cuting and fishery rihgts at once.",
-		        "He was the more ready to do this becuase the rights had become much less valuable, and he had indeed the vaguest idea where the wood and river in question were."]
+        text = [['He', 'determined', 'to', 'drop', 'his', 'litigation', 'with', 'the', 'monastry', 'and', 'relinguish', 'his', 'claims', 'to', 'the', 'wood', 'and', 'fishery', 'rihgts', 'at', 'once.'],
+                ['He', 'was', 'the', 'more', 'ready', 'to', 'do', 'this', 'becuase', 'the', 'rights', 'had', 'become', 'much', 'less', 'valuable', 'and', 'he', 'had', 'indeed', 'the', 'vaguest', 'idea', 'where', 'the', 'wood', 'and', 'river', 'in', 'question', 'were.']]
 
-        excepted_result = ["He determined drop litigation monastry, relinguish claims wood-cuting fishery rihgts.",
-						   "He ready becuase rights become much less valuable, indeed vaguest idea wood river question."]
+        excepted_result = [['He', 'determined', 'drop', 'litigation', 'monastry', 'relinguish', 'claims', 'wood', 'fishery', 'rihgts', 'once.'],
+                           ['He', 'ready', 'becuase',  'rights',  'become', 'much', 'less', 'valuable',  'indeed', 'vaguest', 'idea',  'wood',  'river', 'question','were.']]
+
         # Act
         actual_result = StopwordRemoval().fromList(text)
-        # Assestion
+        # Assertion
         self.assertEqual(excepted_result, actual_result)
 
 if __name__ == '__main__':
