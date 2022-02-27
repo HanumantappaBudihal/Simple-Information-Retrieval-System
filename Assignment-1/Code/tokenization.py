@@ -4,6 +4,7 @@ from util import *
 # Add your import statements here
 from nltk.tokenize import word_tokenize
 from nltk.tokenize import TreebankWordTokenizer
+from nltk.tokenize import RegexpTokenizer
 
 
 class Tokenization():
@@ -22,11 +23,12 @@ class Tokenization():
         list
                 A list of lists where each sub-list is a sequence of tokens
         """
+        pattern = r'\s+'
+        regexp = RegexpTokenizer(pattern, gaps=True)
 
         tokenizedText = []
-
-        for sentence in text:
-            tokenizedText.append(word_tokenize(sentence))
+        for setence in text:
+            tokenizedText.append(regexp.tokenize(setence .replace(',', ' , ')))
 
         return tokenizedText
 
@@ -60,11 +62,11 @@ class TokenizationTestMethods(unittest.TestCase):
 
     def test_naive(self):
         # Arrange
-        text = ["There are multiple ways we can perform tokenization on given text data.",
-                "We can choose any method based on langauge, library and purpose of modeling."]
+        text = ["There are multiple ways we can perform tokenization on given text data",
+                "We can choose any method based on langauge, library and purpose of modeling"]
 
-        excepted_result = [['There', 'are', 'multiple', 'ways', 'we', 'can', 'perform', 'tokenization', 'on', 'given', 'text', 'data.'],
-                           ['We', 'can', 'choose', 'any', 'method', 'based', 'on', 'langauge,', 'library', 'and', 'purpose', 'of', 'modeling.']]
+        excepted_result = [['There', 'are', 'multiple', 'ways', 'we', 'can', 'perform', 'tokenization', 'on', 'given', 'text', 'data'],
+                           ['We', 'can', 'choose', 'any', 'method', 'based', 'on', 'langauge',',', 'library', 'and', 'purpose', 'of', 'modeling']]
         # Act
         actual_result = Tokenization().naive(text)
         # Assestion
@@ -72,14 +74,14 @@ class TokenizationTestMethods(unittest.TestCase):
 
     def test_pennTreeBank(self):
         # Arrange
-        text = ["Good muffins cost $3.88\nin New York.",
-                "Please buy me\ntwo of them.\nThanks."]
+        text = ["Good muffins cost $3.88\nin New York",
+                "Please buy me\ntwo of them.\nThanks"]
 
-        excepted_result = [['Good', 'muffins', 'cost', '$', '3.88', 'in', 'New', 'York.'],
-                           ['Please', 'buy', 'me', 'two', 'of', 'them.', 'Thanks', '.']]
+        excepted_result = [['Good', 'muffins', 'cost', '$', '3.88', 'in', 'New', 'York'],
+                           ['Please', 'buy', 'me', 'two', 'of', 'them.', 'Thanks']]
         # Act
         actual_result = Tokenization().pennTreeBank(text)
-        # Assestion
+        # Assertion
         self.assertEqual(excepted_result, actual_result)
 
 
