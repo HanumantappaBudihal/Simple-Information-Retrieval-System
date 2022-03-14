@@ -172,7 +172,14 @@ class Evaluation():
 
 		meanRecall = -1
 
-		#Fill in code here
+		ground_truth = self.__getRelevanceAndPositionList(query_ids,qrels)
+		
+		recall_list = []
+		for query_id in query_ids:
+			for query_doc_IDs_ordered,true_doc_IDs in zip(doc_IDs_ordered,ground_truth["relevance"]):
+				recall_list.append(self.queryRecall(query_doc_IDs_ordered, query_id, true_doc_IDs, k))
+
+		meanRecall = np.mean(np.array(recall_list))
 
 		return meanRecall
 
