@@ -285,7 +285,23 @@ class Evaluation():
 
 		nDCG = -1
 
-		#Fill in code here
+		relevance_score = []
+		for position in true_doc_IDs["position"]:
+			relevance_score.append(5-position)
+		DCG = 0
+		for i in range(1,k+1):
+			if query_doc_IDs_ordered[i-1] in true_doc_IDs["relevance"]:
+				j = true_doc_IDs["relevance"].index(query_doc_IDs_ordered[i-1])
+				DCG += relevance_score[j]/log2(i+1)
+
+		iDCG = 0
+
+		relevance_score.sort()
+		m = min(k,len(relevance_score))
+		for i in range(1,m+1):
+			iDCG += relevance_score[-i]/log2(i+1)
+
+		nDCG = DCG/iDCG
 
 		return nDCG
 
@@ -317,10 +333,17 @@ class Evaluation():
 
 		meanNDCG = -1
 
-		#Fill in code here
+		ground_truth = self.__getRelevanceAndPositionList(query_ids,qrels)
+		
+		nDCG_list = []
+		for query_id in query_ids:
+			for query_doc_IDs_ordered,rel,pos in zip(doc_IDs_ordered,ground_truth["relevance"],ground_truth["position"]):
+				true_doc_IDs = {"relevance": rel,"position": pos}
+				nDCG_list.append(self.queryNDCG(query_doc_IDs_ordered, query_id, true_doc_IDs, k))
+
+		meanNDCG = np.mean(np.array(nDCG_list))
 
 		return meanNDCG
-
 
 	def queryAveragePrecision(self, query_doc_IDs_ordered, query_id, true_doc_IDs, k):
 		"""
