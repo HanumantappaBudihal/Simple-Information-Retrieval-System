@@ -369,11 +369,20 @@ class Evaluation():
 			The average precision value as a number between 0 and 1
 		"""
 
-		avgPrecision = -1
+		avgPrecision = 0
+		count = 0
+		for i in range(1,k+1):
+			if query_doc_IDs_ordered[i-1] in true_doc_IDs:
+				avgPrecision += self.queryPrecision(query_doc_IDs_ordered, query_id, true_doc_IDs, i)
+				count += 1
+		if count:
+			avgPrecision = avgPrecision/(count)
+		else:
+			avgPrecision = 0
 
-		#Fill in code here
 
 		return avgPrecision
+
 
 
 	def meanAveragePrecision(self, doc_IDs_ordered, query_ids, q_rels, k):
@@ -404,6 +413,13 @@ class Evaluation():
 		meanAveragePrecision = -1
 
 		#Fill in code here
+		ground_truth = self.__getRelevanceAndPositionList(query_ids,q_rels)
+		
+		avg_precision_list = []
+		for query_id in query_ids:
+			for query_doc_IDs_ordered,true_doc_IDs in zip(doc_IDs_ordered,ground_truth["relevance"]):
+				avg_precision_list.append(self.queryAveragePrecision(query_doc_IDs_ordered, query_id, true_doc_IDs, k))
+
+		meanAveragePrecision = np.mean(np.array(avg_precision_list))
 
 		return meanAveragePrecision
-
