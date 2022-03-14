@@ -1,12 +1,19 @@
 from util import *
-
-# Add your import statements here
-
-
+import numpy as np
+from math import log2
 
 
 class Evaluation():
-
+	def __intersection(self,list1,list2):
+		"""
+		Parameters
+		----------
+		Returns
+		-------		
+		"""
+		list3 = [value for value in list1 if value in list2]
+		return len(list3)
+		
 	def queryPrecision(self, query_doc_IDs_ordered, query_id, true_doc_IDs, k):
 		"""
 		Computation of precision of the Information Retrieval System
@@ -32,7 +39,9 @@ class Evaluation():
 
 		precision = -1
 
-		#Fill in code here
+		numerator = self.__intersection(query_doc_IDs_ordered[:k],true_doc_IDs)
+		denominator = k
+		precision = numerator/denominator
 
 		return precision
 
