@@ -12,8 +12,36 @@ class Evaluation():
 		-------		
 		"""
 		list3 = [value for value in list1 if value in list2]
-		return len(list3)
 		
+		return len(list3)
+
+	def __getRelevanceAndPositionList(self,query_ids,qrels):
+		"""
+		Parameters
+		----------
+		Returns
+		-------		
+		"""
+		ground_truth = { "position": [],"relevance" : []}
+
+		qrels_index = 0
+		len_of_qrels = len(qrels)
+		for q_id in query_ids:
+			pos = []
+			rel = []
+			while(qrels_index < len_of_qrels):
+
+				if int(qrels[qrels_index]["query_num"]) == q_id:
+					pos.append(int(qrels[qrels_index]["position"]))
+					rel.append(int(qrels[qrels_index]["id"]))
+					qrels_index += 1
+				else:
+					ground_truth["position"].append(pos)
+					ground_truth["relevance"].append(rel)
+					break
+		
+		return ground_truth
+
 	def queryPrecision(self, query_doc_IDs_ordered, query_id, true_doc_IDs, k):
 		"""
 		Computation of precision of the Information Retrieval System
@@ -73,7 +101,14 @@ class Evaluation():
 
 		meanPrecision = -1
 
-		#Fill in code here
+		ground_truth = self.__getRelevanceAndPositionList(query_ids,qrels)
+		
+		precision_list = []
+		for query_id in query_ids:
+			for query_doc_IDs_ordered,true_doc_IDs in zip(doc_IDs_ordered,ground_truth["relevance"]):
+				precision_list.append(self.queryPrecision(query_doc_IDs_ordered, query_id, true_doc_IDs, k))
+
+		meanPrecision = np.mean(np.array(precision_list))
 
 		return meanPrecision
 
