@@ -209,7 +209,14 @@ class Evaluation():
 
 		fscore = -1
 
-		#Fill in code here
+		recall = self.queryRecall(query_doc_IDs_ordered, query_id, true_doc_IDs, k)
+		precision = self.queryPrecision(query_doc_IDs_ordered, query_id, true_doc_IDs, k)
+		if recall > 0 or precision > 0:
+			fscore = 2*recall*precision/(recall + precision)
+		else:
+			fscore = 0
+
+		return fscore
 
 		return fscore
 
@@ -241,7 +248,14 @@ class Evaluation():
 
 		meanFscore = -1
 
-		#Fill in code here
+		ground_truth = self.__getRelevanceAndPositionList(query_ids,qrels)
+		
+		fscore_list = []
+		for query_id in query_ids:
+			for query_doc_IDs_ordered,true_doc_IDs in zip(doc_IDs_ordered,ground_truth["relevance"]):
+				fscore_list.append(self.queryFscore(query_doc_IDs_ordered, query_id, true_doc_IDs, k))
+
+		meanFscore = np.mean(np.array(fscore_list))
 
 		return meanFscore
 	
