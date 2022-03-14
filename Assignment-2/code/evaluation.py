@@ -12,7 +12,7 @@ class Evaluation():
 		-------		
 		"""
 		list3 = [value for value in list1 if value in list2]
-		
+
 		return len(list3)
 
 	def __getRelevanceAndPositionList(self,query_ids,qrels):
@@ -138,7 +138,9 @@ class Evaluation():
 
 		recall = -1
 
-		#Fill in code here
+		numerator = self.__intersection(query_doc_IDs_ordered[:k],true_doc_IDs)
+		denominator = len(true_doc_IDs)
+		recall = numerator/denominator
 
 		return recall
 
