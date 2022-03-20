@@ -92,19 +92,12 @@ class InformationRetrieval():
                 cnt += wordCntDoc[idx][word]
             if cnt == 0:
                 print("word Zero:", word)
-            gf[i] = cnt
-        # # print(gf[:100])
-        # print("----------------------------------------------")
-        # print("Built Df")
-        # print("----------------------------------------------")
+            gf[i] = cnt       
 
         idf = [0 for _ in range(len(unq_words)+1)]
         for i, n in enumerate(df):
             idf[i] = np.log((N+1)/(n+1))
 
-        # print("----------------------------------------------")
-        # print("Built Idf")
-        # print("----------------------------------------------")
 
         entropy = [0 for _ in range(len(unq_words)+1)]
         for i, word in enumerate(unq_words):
@@ -126,17 +119,9 @@ class InformationRetrieval():
                 else:
                     mat[i][doc] = 0
 
-        # print("----------------------------------------------")
-        # print("Built Mat")
-        # print("----------------------------------------------")
 
         U, s, Vh = np.linalg.svd(mat)
-
-        #print("Mat shape:",mat.shape,"U shape:",U.shape)
-        #print("S shape:",np.diag(s).shape, "Vh shape:",Vh.shape)
         self.k = 300
-
-        #print("Check",np.allclose(mat, np.dot(U[:, :s.shape[0]] * s, Vh)))
 
         self.s = np.zeros((U.shape[0], Vh.shape[0]))
         self.sigma = np.zeros((self.k, self.k))
