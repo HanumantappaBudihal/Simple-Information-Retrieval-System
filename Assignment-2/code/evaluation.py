@@ -1,11 +1,46 @@
 from util import *
-
-# Add your import statements here
-
-
+import numpy as np
+from math import log2
 
 
 class Evaluation():
+	def __intersection(self,list1,list2):
+		"""
+		Parameters
+		----------
+		Returns
+		-------		
+		"""
+		list3 = [value for value in list1 if value in list2]
+
+		return len(list3)
+
+	def __getRelevanceAndPositionList(self,query_ids,qrels):
+		"""
+		Parameters
+		----------
+		Returns
+		-------		
+		"""
+		ground_truth = { "position": [],"relevance" : []}
+
+		qrels_index = 0
+		len_of_qrels = len(qrels)
+		for q_id in query_ids:
+			pos = []
+			rel = []
+			while(qrels_index < len_of_qrels):
+
+				if int(qrels[qrels_index]["query_num"]) == q_id:
+					pos.append(int(qrels[qrels_index]["position"]))
+					rel.append(int(qrels[qrels_index]["id"]))
+					qrels_index += 1
+				else:
+					ground_truth["position"].append(pos)
+					ground_truth["relevance"].append(rel)
+					break
+		
+		return ground_truth
 
 	def queryPrecision(self, query_doc_IDs_ordered, query_id, true_doc_IDs, k):
 		"""
@@ -32,7 +67,9 @@ class Evaluation():
 
 		precision = -1
 
-		#Fill in code here
+		numerator = self.__intersection(query_doc_IDs_ordered[:k],true_doc_IDs)
+		denominator = k
+		precision = numerator/denominator
 
 		return precision
 
@@ -64,7 +101,14 @@ class Evaluation():
 
 		meanPrecision = -1
 
-		#Fill in code here
+		ground_truth = self.__getRelevanceAndPositionList(query_ids,qrels)
+		
+		precision_list = []
+		for query_id in query_ids:
+			for query_doc_IDs_ordered,true_doc_IDs in zip(doc_IDs_ordered,ground_truth["relevance"]):
+				precision_list.append(self.queryPrecision(query_doc_IDs_ordered, query_id, true_doc_IDs, k))
+
+		meanPrecision = np.mean(np.array(precision_list))
 
 		return meanPrecision
 
@@ -94,7 +138,9 @@ class Evaluation():
 
 		recall = -1
 
-		#Fill in code here
+		numerator = self.__intersection(query_doc_IDs_ordered[:k],true_doc_IDs)
+		denominator = len(true_doc_IDs)
+		recall = numerator/denominator
 
 		return recall
 
@@ -126,7 +172,14 @@ class Evaluation():
 
 		meanRecall = -1
 
-		#Fill in code here
+		ground_truth = self.__getRelevanceAndPositionList(query_ids,qrels)
+		
+		recall_list = []
+		for query_id in query_ids:
+			for query_doc_IDs_ordered,true_doc_IDs in zip(doc_IDs_ordered,ground_truth["relevance"]):
+				recall_list.append(self.queryRecall(query_doc_IDs_ordered, query_id, true_doc_IDs, k))
+
+		meanRecall = np.mean(np.array(recall_list))
 
 		return meanRecall
 
@@ -156,7 +209,14 @@ class Evaluation():
 
 		fscore = -1
 
-		#Fill in code here
+		recall = self.queryRecall(query_doc_IDs_ordered, query_id, true_doc_IDs, k)
+		precision = self.queryPrecision(query_doc_IDs_ordered, query_id, true_doc_IDs, k)
+		if recall > 0 or precision > 0:
+			fscore = 2*recall*precision/(recall + precision)
+		else:
+			fscore = 0
+
+		return fscore
 
 		return fscore
 
@@ -188,7 +248,14 @@ class Evaluation():
 
 		meanFscore = -1
 
-		#Fill in code here
+		ground_truth = self.__getRelevanceAndPositionList(query_ids,qrels)
+		
+		fscore_list = []
+		for query_id in query_ids:
+			for query_doc_IDs_ordered,true_doc_IDs in zip(doc_IDs_ordered,ground_truth["relevance"]):
+				fscore_list.append(self.queryFscore(query_doc_IDs_ordered, query_id, true_doc_IDs, k))
+
+		meanFscore = np.mean(np.array(fscore_list))
 
 		return meanFscore
 	
@@ -218,7 +285,23 @@ class Evaluation():
 
 		nDCG = -1
 
-		#Fill in code here
+		relevance_score = []
+		for position in true_doc_IDs["position"]:
+			relevance_score.append(5-position)
+		DCG = 0
+		for i in range(1,k+1):
+			if query_doc_IDs_ordered[i-1] in true_doc_IDs["relevance"]:
+				j = true_doc_IDs["relevance"].index(query_doc_IDs_ordered[i-1])
+				DCG += relevance_score[j]/log2(i+1)
+
+		iDCG = 0
+
+		relevance_score.sort()
+		m = min(k,len(relevance_score))
+		for i in range(1,m+1):
+			iDCG += relevance_score[-i]/log2(i+1)
+
+		nDCG = DCG/iDCG
 
 		return nDCG
 
@@ -250,10 +333,17 @@ class Evaluation():
 
 		meanNDCG = -1
 
-		#Fill in code here
+		ground_truth = self.__getRelevanceAndPositionList(query_ids,qrels)
+		
+		nDCG_list = []
+		for query_id in query_ids:
+			for query_doc_IDs_ordered,rel,pos in zip(doc_IDs_ordered,ground_truth["relevance"],ground_truth["position"]):
+				true_doc_IDs = {"relevance": rel,"position": pos}
+				nDCG_list.append(self.queryNDCG(query_doc_IDs_ordered, query_id, true_doc_IDs, k))
+
+		meanNDCG = np.mean(np.array(nDCG_list))
 
 		return meanNDCG
-
 
 	def queryAveragePrecision(self, query_doc_IDs_ordered, query_id, true_doc_IDs, k):
 		"""
@@ -279,11 +369,20 @@ class Evaluation():
 			The average precision value as a number between 0 and 1
 		"""
 
-		avgPrecision = -1
+		avgPrecision = 0
+		count = 0
+		for i in range(1,k+1):
+			if query_doc_IDs_ordered[i-1] in true_doc_IDs:
+				avgPrecision += self.queryPrecision(query_doc_IDs_ordered, query_id, true_doc_IDs, i)
+				count += 1
+		if count:
+			avgPrecision = avgPrecision/(count)
+		else:
+			avgPrecision = 0
 
-		#Fill in code here
 
 		return avgPrecision
+
 
 
 	def meanAveragePrecision(self, doc_IDs_ordered, query_ids, q_rels, k):
@@ -314,6 +413,13 @@ class Evaluation():
 		meanAveragePrecision = -1
 
 		#Fill in code here
+		ground_truth = self.__getRelevanceAndPositionList(query_ids,q_rels)
+		
+		avg_precision_list = []
+		for query_id in query_ids:
+			for query_doc_IDs_ordered,true_doc_IDs in zip(doc_IDs_ordered,ground_truth["relevance"]):
+				avg_precision_list.append(self.queryAveragePrecision(query_doc_IDs_ordered, query_id, true_doc_IDs, k))
+
+		meanAveragePrecision = np.mean(np.array(avg_precision_list))
 
 		return meanAveragePrecision
-
