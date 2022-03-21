@@ -28,10 +28,10 @@ class InformationRetrieval():
         m = len(docIDs)
         for i in range(m):
             docIDs[i] -= 1
-
+        
         N = docIDs[-1]
-
         words = []
+        
         for doc in docs:
             for sent in doc:
                 for word in sent:
@@ -44,7 +44,7 @@ class InformationRetrieval():
 
         wcd = [defaultdict(int) for _ in range(N+1)]               
         words = [wordnet.synsets(word)[0].name() if len(wordnet.synsets(word)) > 0 else word for word in words]
-        unq_words = list(set(words))
+        unique_words = list(set(words))
         
         for idx in docIDs:
             for sent in docs[idx]:
@@ -67,29 +67,29 @@ class InformationRetrieval():
                             else:
                                 wcd[idx][w2] += 1
 
-        df = [0] * (len(unq_words)+1)
-        gf = [0] * (len(unq_words)+1)
-        idf = [0] * (len(unq_words)+1)
-        entropy = [1] * (len(unq_words)+1)
+        df = [0] * (len(unique_words)+1)
+        gf = [0] * (len(unique_words)+1)
+        idf = [0] * (len(unique_words)+1)
+        entropy = [1] * (len(unique_words)+1)
+        index = np.zeros((len(unique_words), N+1))
 
-        for i, word in enumerate(unq_words):
+        for i, word in enumerate(unique_words):
             df[i] = len([idx for idx in docIDs if wcd[idx][word] != 0])
 
-        for i, word in enumerate(unq_words):
+        for i, word in enumerate(unique_words):
             for idx in docIDs:
                 gf[i] += wcd[idx][word]      
 
         for i, n in enumerate(df):
             idf[i] = np.log((N+1)/(n+1))
 
-        for i, word in enumerate(unq_words):
+        for i, word in enumerate(unique_words):
             for idx in docIDs:
                 pij = wcd[idx][word]/gf[i]
                 entropy[i] += (np.log(pij+1) * pij)/np.log(N)
 
-        index = np.zeros((len(unq_words), N+1))
         for doc in docIDs:
-            for i, word in enumerate(unq_words):
+            for i, word in enumerate(unique_words):
                 index[i][doc] = (entropy[i] * (1 + np.log(wcd[doc][word]))) if wcd[doc][word] > 0 else 0
 
         self.k = 300
@@ -106,7 +106,7 @@ class InformationRetrieval():
 
         self.docIDs = docIDs
         self.idf = idf
-        self.unq_words = unq_words
+        self.unique_words = unique_words
         self.index = index
 
     def rank(self, queries):
@@ -130,7 +130,7 @@ class InformationRetrieval():
         # Getting Vector for Query
         doc_IDs_ordered = []
         for query in queries:
-            vec = np.zeros((len(self.unq_words), 1))
+            vec = np.zeros((len(self.unique_words), 1))
             cnt = defaultdict(int)
 
             for sent in query:
@@ -153,7 +153,7 @@ class InformationRetrieval():
                             else:
                                 cnt[w2] += 1
 
-            for i, word in enumerate(self.unq_words):
+            for i, word in enumerate(self.unique_words):
                 vec[i][0] = self.idf[i]*(cnt[word]) if cnt[word] > 0 else 0
             
             scores = [[None, None]] * (self.docIDs[-1]+1)
