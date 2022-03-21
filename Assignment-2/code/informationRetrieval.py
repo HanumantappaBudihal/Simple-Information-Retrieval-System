@@ -42,7 +42,7 @@ class InformationRetrieval():
                         if '-' in word:
                             words.extend(word.split('-'))
 
-        wordCntDoc = [defaultdict(int) for _ in range(N+1)]               
+        wcd = [defaultdict(int) for _ in range(N+1)]               
         words = [wordnet.synsets(word)[0].name() if len(wordnet.synsets(word)) > 0 else word for word in words]
         unq_words = list(set(words))
         
@@ -52,20 +52,20 @@ class InformationRetrieval():
                     word = word.lower()
                     if word.isalpha():
                         if len(wordnet.synsets(word)) > 0:
-                            wordCntDoc[idx][wordnet.synsets(word)[0].name()] += 1
+                            wcd[idx][wordnet.synsets(word)[0].name()] += 1
                         else:
-                            wordCntDoc[idx][word] += 1
+                            wcd[idx][word] += 1
                     else:
                         if '-' in word:
                             w1, w2 = word.split('-')
                             if len(wordnet.synsets(w1)) > 0:
-                                wordCntDoc[idx][wordnet.synsets(w1)[0].name()] += 1
+                                wcd[idx][wordnet.synsets(w1)[0].name()] += 1
                             else:
-                                wordCntDoc[idx][w1] += 1
+                                wcd[idx][w1] += 1
                             if len(wordnet.synsets(w2)) > 0:
-                                wordCntDoc[idx][wordnet.synsets(w2)[0].name()] += 1
+                                wcd[idx][wordnet.synsets(w2)[0].name()] += 1
                             else:
-                                wordCntDoc[idx][w2] += 1
+                                wcd[idx][w2] += 1
 
         df = [0] * (len(unq_words)+1)
         gf = [0] * (len(unq_words)+1)
@@ -73,41 +73,37 @@ class InformationRetrieval():
         entropy = [1] * (len(unq_words)+1)
 
         for i, word in enumerate(unq_words):
-            df[i] = len([idx for idx in docIDs if wordCntDoc[idx][word] != 0])
+            df[i] = len([idx for idx in docIDs if wcd[idx][word] != 0])
 
         for i, word in enumerate(unq_words):
             for idx in docIDs:
-                gf[i] += wordCntDoc[idx][word]      
+                gf[i] += wcd[idx][word]      
 
         for i, n in enumerate(df):
             idf[i] = np.log((N+1)/(n+1))
 
         for i, word in enumerate(unq_words):
             for idx in docIDs:
-                pij = wordCntDoc[idx][word]/gf[i]
+                pij = wcd[idx][word]/gf[i]
                 entropy[i] += (np.log(pij+1) * pij)/np.log(N)
 
         index = np.zeros((len(unq_words), N+1))
         for doc in docIDs:
             for i, word in enumerate(unq_words):
-                index[i][doc] = (entropy[i] * (1 + np.log(wordCntDoc[doc][word]))) if wordCntDoc[doc][word] > 0 else 0
+                index[i][doc] = (entropy[i] * (1 + np.log(wcd[doc][word]))) if wcd[doc][word] > 0 else 0
 
         self.k = 300
-        U, s, Vh = np.linalg.svd(index)
-        self.s = np.zeros((U.shape[0], Vh.shape[0]))
+        U, s, V = np.linalg.svd(index)
+        self.s = np.zeros((U.shape[0], V.shape[0]))
         self.sigma = np.zeros((self.k, self.k))
 
         for i in range(self.k):
             self.s[i][i] = s[i]
             self.sigma[i][i] = s[i]
 
-        self.U = np.dot(U, self.s)
-        self.U = self.U[:, :self.k]
-        self.Vh = np.dot(self.s, Vh)
-        self.Vh = self.Vh[:self.k]
+        self.U = np.dot(U, self.s)[:, :self.k]
+        self.V = np.dot(self.s, V)[:self.k]
 
-        self.wordCntDoc = wordCntDoc
-        self.docs = docs
         self.docIDs = docIDs
         self.idf = idf
         self.unq_words = unq_words
@@ -160,16 +156,15 @@ class InformationRetrieval():
             for i, word in enumerate(self.unq_words):
                 vec[i][0] = self.idf[i]*(cnt[word]) if cnt[word] > 0 else 0
             
-            scores = [[0, 0]] * (self.docIDs[-1]+1)
+            scores = [[None, None]] * (self.docIDs[-1]+1)
             vec = np.linalg.multi_dot([np.linalg.inv(self.sigma), self.U.T, vec])
 
             for idx in self.docIDs:
-                sc = np.dot(vec.T, self.Vh[:, idx].reshape(self.k, 1))
-                if not np.linalg.norm(vec) or not np.linalg.norm(self.Vh[:, idx]):
+                sc = np.dot(vec.T, self.V[:, idx].reshape(self.k, 1))
+                if not np.linalg.norm(vec) or not np.linalg.norm(self.V[:, idx]):
                     scores[idx] = [0, idx]
                     continue
-                sc = sc / np.linalg.norm(vec)
-                sc = sc / np.linalg.norm(self.Vh[:, idx])
+                sc = sc / (np.linalg.norm(vec) * np.linalg.norm(self.V[:, idx]))
                 scores[idx] = [sc, idx]
             
             scores.sort(reverse=True)
