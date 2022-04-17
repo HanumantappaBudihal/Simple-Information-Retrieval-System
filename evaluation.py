@@ -1,4 +1,3 @@
-from util import *
 import numpy as np
 from math import log2
 
@@ -215,9 +214,6 @@ class Evaluation():
 			fscore = 2*recall*precision/(recall + precision)
 		else:
 			fscore = 0
-
-		return fscore
-
 		return fscore
 
 
@@ -252,11 +248,10 @@ class Evaluation():
 		
 		fscore_list = []
 		for query_id in query_ids:
-			for query_doc_IDs_ordered,true_doc_IDs in zip(doc_IDs_ordered,ground_truth["relevance"]):
+			for query_doc_IDs_ordered, true_doc_IDs in zip(doc_IDs_ordered,ground_truth["relevance"]):
 				fscore_list.append(self.queryFscore(query_doc_IDs_ordered, query_id, true_doc_IDs, k))
 
 		meanFscore = np.mean(np.array(fscore_list))
-
 		return meanFscore
 	
 
@@ -289,7 +284,7 @@ class Evaluation():
 		for position in true_doc_IDs["position"]:
 			relevance_score.append(5-position)
 		DCG = 0
-		for i in range(1,k+1):
+		for i in range(1, k+1):
 			if query_doc_IDs_ordered[i-1] in true_doc_IDs["relevance"]:
 				j = true_doc_IDs["relevance"].index(query_doc_IDs_ordered[i-1])
 				DCG += relevance_score[j]/log2(i+1)
@@ -302,7 +297,6 @@ class Evaluation():
 			iDCG += relevance_score[-i]/log2(i+1)
 
 		nDCG = DCG/iDCG
-
 		return nDCG
 
 
