@@ -4,12 +4,14 @@ from inflectionReduction import InflectionReduction
 from stopwordRemoval import StopwordRemoval
 from spellCheckQuery import SpellCheck
 from informationRetrieval_LSA import InformationRetrieval
+from informationRetrieval_VSM import InformationRetrieval as InformationRetrievalBaseline
 from evaluation import Evaluation
 from multiprocessing import cpu_count
 from joblib import delayed, Parallel
 import argparse
 import json
 import matplotlib.pyplot as plt
+from time import time
 
 
 n_jobs = cpu_count()
@@ -25,6 +27,7 @@ class SearchEngine:
 		self.inflectionReducer = InflectionReduction()
 		self.stopwordRemover = StopwordRemoval()
 		self.informationRetriever = InformationRetrieval()
+		self.informationRetrieverBaseline = InformationRetrievalBaseline()
 		self.spellCheck = SpellCheck()
 		self.evaluator = Evaluation()
 
@@ -135,16 +138,39 @@ class SearchEngine:
 		processedDocs = self.preprocessDocs(docs)
 		print("docs pre-processed!")
 
-		# Build document index
-		self.informationRetriever.buildIndexWithSVD(processedDocs, doc_ids, n_comp=350)
-		# Rank the documents for each query
-		doc_IDs_ordered = self.informationRetriever.rank(processedQueries)
-
-		# Read relevance judements
+		nDCGs, best_nDCG, best_n_comp = [], 0, 50
 		qrels = json.load(open(f"{args.dataset}cran_qrels.json", 'r'))
 
-		# Calculate precision, recall, f-score, MAP and nDCG for k = 1 to 10
-		precisions, recalls, fscores, MAPs, nDCGs = [], [], [], [], []
+		#---------------------------------------------------------------------------------------------------------------------------#
+
+		## Plot nDCG for Different n_comp ##
+		for n_comp in range(50, doc_ids[-1], 50):
+			print(f"running LSA with n_comp={n_comp};", end=' ')
+			start = time()
+			self.informationRetriever.buildIndexWithSVD(processedDocs, doc_ids, n_comp=n_comp)
+			doc_IDs_ordered = self.informationRetriever.rank(processedQueries)
+			nDCG = self.evaluator.meanNDCG(doc_IDs_ordered, query_ids, qrels, k=10)
+			print(f"runtime: {(time() - start):.4f}s")
+			nDCGs.append(nDCG)
+			if nDCG >= best_nDCG:
+				best_nDCG, best_n_comp = nDCG, n_comp
+
+		print(f"best nDCG @ 10: {best_nDCG}, best_n_comp: {best_n_comp}")
+		plt.plot(range(50, doc_ids[-1], 50), nDCGs, linestyle="dashed", marker='o')
+		plt.title("nDCG for varying n_comp - Cranfield Dataset")
+		plt.xlabel("n_comp")
+		plt.ylabel("nDCG @ 10")
+		plt.savefig(f"{args.out_folder}nDCG @ 10.png")
+		plt.show()
+
+		#---------------------------------------------------------------------------------------------------------------------------#
+
+		print('\n')
+		## Compare VSM and LSA ##
+		# Get Metrics of VSM
+		self.informationRetrieverBaseline.buildIndex(processedDocs, doc_ids)
+		doc_IDs_ordered = self.informationRetrieverBaseline.rank(processedQueries)
+		precisions_vsm, recalls_vsm, fscores_vsm, MAPs_vsm, nDCGs_vsm = [], [], [], [], []
 		for k in range(1, 11):
 			precision = self.evaluator.meanPrecision(doc_IDs_ordered, query_ids, qrels, k)
 			recall = self.evaluator.meanRecall(doc_IDs_ordered, query_ids, qrels, k)
@@ -152,25 +178,55 @@ class SearchEngine:
 			nDCG = self.evaluator.meanNDCG(doc_IDs_ordered, query_ids, qrels, k)
 			MAP = self.evaluator.meanAveragePrecision(doc_IDs_ordered, query_ids, qrels, k)
 			
-			precisions.append(precision)
-			recalls.append(recall)
-			fscores.append(fscore)
-			nDCGs.append(nDCG)
-			MAPs.append(MAP)
+			precisions_vsm.append(precision)
+			recalls_vsm.append(recall)
+			fscores_vsm.append(fscore)
+			nDCGs_vsm.append(nDCG)
+			MAPs_vsm.append(MAP)
 			
-			print(f"Precision, Recall and F-score @ {k} : {precision:.4f}, {recall:.4f}, {fscore:.4f}")
-			print(f"MAP, nDCG @ {k} : {MAP:.4f}, {nDCG:.4f}")
+			print(f"[VSM] Precision, Recall and F-score @ {k} : {precision:.4f}, {recall:.4f}, {fscore:.4f}")
+			print(f"[VSM] MAP, nDCG @ {k} : {MAP:.4f}, {nDCG:.4f}")
+
+		print('\n')
+		# Get Metrics of LSA with best_n_comp
+		self.informationRetriever.buildIndexWithSVD(processedDocs, doc_ids, n_comp=best_n_comp)
+		doc_IDs_ordered = self.informationRetriever.rank(processedQueries)
+		precisions_lsa, recalls_lsa, fscores_lsa, MAPs_lsa, nDCGs_lsa = [], [], [], [], []
+		for k in range(1, 11):
+			precision = self.evaluator.meanPrecision(doc_IDs_ordered, query_ids, qrels, k)
+			recall = self.evaluator.meanRecall(doc_IDs_ordered, query_ids, qrels, k)
+			fscore = self.evaluator.meanFscore(doc_IDs_ordered, query_ids, qrels, k)
+			nDCG = self.evaluator.meanNDCG(doc_IDs_ordered, query_ids, qrels, k)
+			MAP = self.evaluator.meanAveragePrecision(doc_IDs_ordered, query_ids, qrels, k)
+			
+			precisions_lsa.append(precision)
+			recalls_lsa.append(recall)
+			fscores_lsa.append(fscore)
+			nDCGs_lsa.append(nDCG)
+			MAPs_lsa.append(MAP)
+			
+			print(f"[LSA] Precision, Recall and F-score @ {k} : {precision:.4f}, {recall:.4f}, {fscore:.4f}")
+			print(f"[LSA] MAP, nDCG @ {k} : {MAP:.4f}, {nDCG:.4f}")
 
 		# Plot the metrics and save plot 
-		plt.plot(range(1, 11), precisions, label="Precision")
-		plt.plot(range(1, 11), recalls, label="Recall")
-		plt.plot(range(1, 11), fscores, label="F-Score")
-		plt.plot(range(1, 11), MAPs, label="MAP")
-		plt.plot(range(1, 11), nDCGs, label="nDCG")
-		plt.title("Evaluation Metrics - Cranfield Dataset")
+		plt.plot(precisions_vsm, label="Precision_VSM", linestyle="dashed", color='b')
+		plt.plot(precisions_lsa, label="Precision_LSA", color='b')
+		plt.plot(recalls_vsm, label="Recall_VSM", linestyle="dashed", color='r')
+		plt.plot(recalls_lsa, label="Recall_LSA", color='r')
+		plt.plot(fscores_vsm, label="F-Score_VSM", linestyle="dashed", color='g')
+		plt.plot(fscores_lsa, label="F-Score_LSA", color='g')
+		plt.plot(MAPs_vsm, label="MAP_VSM", linestyle="dashed", color='m')
+		plt.plot(MAPs_lsa, label="MAP_LSA", color='m')
+		plt.plot(nDCGs_vsm, label="nDCG_VSM", linestyle="dashed", color='k')
+		plt.plot(nDCGs_lsa, label="nDCG_LSA", color='k')
+		plt.title("VSM vs LSA - Evaluation Metrics - Cranfield Dataset")
 		plt.xlabel("k")
-		plt.legend()
-		plt.savefig(f"{args.out_folder}eval_plot.png")
+		plt.legend(bbox_to_anchor=(1.04, 0.5), 
+				   loc="center left", 
+				   borderaxespad=0)
+		plt.savefig(f"{args.out_folder}vsm_lsa_comparison_plot.png",
+					bbox_inches="tight")
+		plt.show()
 
 		
 	def handleCustomQuery(self):

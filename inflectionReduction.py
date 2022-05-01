@@ -1,8 +1,7 @@
-import queue
+import nltk
 from nltk.stem import WordNetLemmatizer
-# import nltk
-# nltk.download("wordnet", quiet=True)
-# nltk.download("omw-1.4", quiet=True)
+nltk.download("wordnet", quiet=True)
+nltk.download("omw-1.4", quiet=True)
 
 class InflectionReduction:
 

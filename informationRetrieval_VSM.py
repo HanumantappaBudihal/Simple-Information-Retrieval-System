@@ -1,12 +1,13 @@
 import numpy as np
+from numpy.linalg import norm
 
 class InformationRetrieval():
 
     def __init__(self):
         self.idf = []
-        self.inv = None
+        self.postings = None
         self.docIDs = None
-        self.basis_words = None
+        self.unique_words = None
         self.matrix = []
         
     def buildIndex(self, docs, docIDs):
@@ -39,7 +40,7 @@ class InformationRetrieval():
                         words.append(word)
 
         unique_words = list(set(words))
-        inv = dict((v, k) for (k, v) in enumerate(unique_words))
+        postings = dict((v, k) for (k, v) in enumerate(unique_words))
 
         # compute tf for each word wrt to each document
         index = np.zeros((len(unique_words), N))
@@ -50,23 +51,24 @@ class InformationRetrieval():
                     word = word.lower()
                     if '-' in word:
                         for w in word.split('-'):
-                            index[inv[w]][idx] += 1
+                            index[postings[w]][idx] += 1
                     else:
-                        index[inv[word]][idx] += 1
+                        index[postings[word]][idx] += 1
 
         # compute idf of each word
-        idf = np.zeros((len(unique_words), 1))
+        idf = np.zeros(len(unique_words))
         for i, word in enumerate(unique_words):
-            n = index[inv[word]].sum()
-            idf[i][0] = np.log((N + 1)/(n + 1))
+            n = index[postings[word]].sum()
+            idf[i] = np.log((N + 1)/(n + 1))
 
+        idf = idf.reshape(-1, 1)
         # w = tf * idf
         # set all required class variables
         self.matrix = index * idf
-        self.basis_words = unique_words
+        self.unique_words = unique_words
         self.idf = idf
         self.docIDs = docIDs
-        self.inv = inv
+        self.postings = postings
         
     def rank(self, queries):
         """
@@ -86,29 +88,30 @@ class InformationRetrieval():
         doc_IDs_ordered = []
         for query in queries:
             retrieved_docs = {}
-            w = np.zeros((len(self.basis_words), 1))
+            q_vec = np.zeros(len(self.unique_words))
 
             for sent in query:
                 for word in sent:
                     if '-' in word:
-                        for p in word.split('-'):
+                        for w in word.split('-'):
                             try:
-                                w[self.inv[p]][0] += 1
+                                q_vec[self.postings[w]] += 1
                             except KeyError:
                                 pass
                     else:
                         try:
-                            w[self.inv[word]][0] += 1
+                            q_vec[self.postings[word]] += 1
                         except KeyError:
                             pass
 
-            w *= self.idf
+            q_vec = q_vec.reshape(-1, 1)
+            q_vec *= self.idf
 
-            for doc_id, v in zip(self.docIDs, self.matrix.T):
-                dot_prod = np.dot(v, w)
-                norms_prod = np.linalg.norm(v) * np.linalg.norm(w)
-                retrieved_docs[doc_id+1] = dot_prod/(norms_prod + 1e-8)
-            
-            doc_IDs_ordered.append(sorted(retrieved_docs, reverse=True, key=lambda x: retrieved_docs[x]))
+            dot_prod = np.dot(q_vec.T, self.matrix)
+            norms_prod = (norm(q_vec) * np.array([norm(v) for v in self.matrix.T])) + 1e-8
+            cos_sim = dot_prod / norms_prod
+
+            retrieved_docs = np.squeeze(np.argsort(cos_sim, kind="mergesort"), axis=0) + 1
+            doc_IDs_ordered.append(retrieved_docs.tolist()[::-1])
             
         return doc_IDs_ordered

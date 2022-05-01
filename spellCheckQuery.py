@@ -1,4 +1,4 @@
-from textblob import Word
+from spellchecker import SpellChecker
 
 class SpellCheck:
 
@@ -18,6 +18,6 @@ class SpellCheck:
                 A list of lists where each sub-list is a sequence of
                 corrected stemmed/lemmatized tokens representing a sentence
         """
-
-        correctedQuery = [[Word(word).correct() for word in sent] for sent in text]
+        spell = SpellChecker()
+        correctedQuery = [[spell.correction(word) for word in sent] for sent in text]
         return correctedQuery

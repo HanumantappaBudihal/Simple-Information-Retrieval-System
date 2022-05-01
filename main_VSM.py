@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 
 n_jobs = cpu_count()
-print(f"paralleizing on {n_jobs} cores")
+print(f"parallelizing on {n_jobs} cores")
 
 
 class SearchEngine:

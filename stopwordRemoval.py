@@ -1,5 +1,5 @@
-# import nltk
-# nltk.download("stopwords", quiet=True)
+import nltk
+nltk.download("stopwords", quiet=True)
 from nltk.corpus import stopwords
 
 class StopwordRemoval():
@@ -24,5 +24,5 @@ class StopwordRemoval():
         allStopwords = set(stopwords.words("english"))
         allStopwords.add("viz")
 
-        stopwordRemovedText = [[t for t in tokens if not t in allStopwords] for tokens in text]
+        stopwordRemovedText = [[t for t in tokens if len(t) > 1 and not t in allStopwords]  for tokens in text]
         return stopwordRemovedText
