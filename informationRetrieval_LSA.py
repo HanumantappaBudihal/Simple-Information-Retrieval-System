@@ -50,10 +50,11 @@ class InformationRetrieval():
                     else:
                         index[postings[word]][idx] += 1
 
+        # compute idf with smoothening
         idf = np.zeros(len(unique_words))
         for i, word in enumerate(unique_words):
             n = index[postings[word]].sum()
-            idf[i] = np.log((N + 1)/(n + 1))
+            idf[i] = np.log((N + 1)/(n + 1)) + 1
 
         idf = idf.reshape(-1, 1)
         index *= idf

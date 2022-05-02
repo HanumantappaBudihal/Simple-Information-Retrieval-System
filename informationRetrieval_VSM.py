@@ -1,5 +1,7 @@
+import enum
 import numpy as np
 from numpy.linalg import norm
+from sys import exit
 
 class InformationRetrieval():
 
@@ -45,8 +47,8 @@ class InformationRetrieval():
         # compute tf for each word wrt to each document
         index = np.zeros((len(unique_words), N))
 
-        for idx in docIDs:
-            for sent in docs[idx]:
+        for idx, doc in enumerate(docs):
+            for sent in doc:
                 for word in sent:
                     word = word.lower()
                     if '-' in word:
@@ -55,11 +57,11 @@ class InformationRetrieval():
                     else:
                         index[postings[word]][idx] += 1
 
-        # compute idf of each word
+        # compute idf of each word with smoothening
         idf = np.zeros(len(unique_words))
         for i, word in enumerate(unique_words):
             n = index[postings[word]].sum()
-            idf[i] = np.log((N + 1)/(n + 1))
+            idf[i] = np.log((N + 1)/(n + 1)) + 1
 
         idf = idf.reshape(-1, 1)
         # w = tf * idf

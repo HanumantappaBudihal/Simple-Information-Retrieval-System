@@ -10,8 +10,10 @@ from multiprocessing import cpu_count
 from joblib import delayed, Parallel
 import argparse
 import json
+import numpy as np
 import matplotlib.pyplot as plt
 from time import time
+plt.style.use("ggplot")
 
 
 n_jobs = cpu_count()
@@ -81,6 +83,7 @@ class SearchEngine:
 		json.dump(queries, open(f"{self.args.out_folder}tokenized_queries.txt", 'w'))
 		if self.args.spellcheck:
 			# correct queries
+			print("running spellcheck")
 			queries = Parallel(n_jobs=n_jobs)(delayed(self.checkSpelling)(query) for query in queries)
 			json.dump(queries, open(f"{self.args.out_folder}corrected_queries.txt", 'w'))
 		# Stem/Lemmatize queries
@@ -138,12 +141,12 @@ class SearchEngine:
 		processedDocs = self.preprocessDocs(docs)
 		print("docs pre-processed!")
 
-		nDCGs, best_nDCG, best_n_comp = [], 0, 50
 		qrels = json.load(open(f"{args.dataset}cran_qrels.json", 'r'))
 
 		#---------------------------------------------------------------------------------------------------------------------------#
 
 		## Plot nDCG for Different n_comp ##
+		nDCGs, best_nDCG, best_n_comp = [], 0, 50
 		for n_comp in range(50, doc_ids[-1], 50):
 			print(f"running LSA with n_comp={n_comp};", end=' ')
 			start = time()
@@ -209,57 +212,28 @@ class SearchEngine:
 			print(f"[LSA] MAP, nDCG @ {k} : {MAP:.4f}, {nDCG:.4f}")
 
 		# Plot the metrics and save plot 
-		plt.plot(precisions_vsm, label="Precision_VSM", linestyle="dashed", color='b')
-		plt.plot(precisions_lsa, label="Precision_LSA", color='b')
-		plt.plot(recalls_vsm, label="Recall_VSM", linestyle="dashed", color='r')
-		plt.plot(recalls_lsa, label="Recall_LSA", color='r')
-		plt.plot(fscores_vsm, label="F-Score_VSM", linestyle="dashed", color='g')
-		plt.plot(fscores_lsa, label="F-Score_LSA", color='g')
-		plt.plot(MAPs_vsm, label="MAP_VSM", linestyle="dashed", color='m')
-		plt.plot(MAPs_lsa, label="MAP_LSA", color='m')
-		plt.plot(nDCGs_vsm, label="nDCG_VSM", linestyle="dashed", color='k')
-		plt.plot(nDCGs_lsa, label="nDCG_LSA", color='k')
+		plt.plot(range(1, 11), precisions_vsm, label="Precision_VSM", linestyle="dashed", color='b')
+		plt.plot(range(1, 11), precisions_lsa, label="Precision_LSA", color='b')
+		plt.plot(range(1, 11), recalls_vsm, label="Recall_VSM", linestyle="dashed", color='r')
+		plt.plot(range(1, 11), recalls_lsa, label="Recall_LSA", color='r')
+		plt.plot(range(1, 11), fscores_vsm, label="F-Score_VSM", linestyle="dashed", color='g')
+		plt.plot(range(1, 11), fscores_lsa, label="F-Score_LSA", color='g')
+		plt.plot(range(1, 11), MAPs_vsm, label="MAP_VSM", linestyle="dashed", color='m')
+		plt.plot(range(1, 11), MAPs_lsa, label="MAP_LSA", color='m')
+		plt.plot(range(1, 11), nDCGs_vsm, label="nDCG_VSM", linestyle="dashed", color='k')
+		plt.plot(range(1, 11), nDCGs_lsa, label="nDCG_LSA", color='k')
 		plt.title("VSM vs LSA - Evaluation Metrics - Cranfield Dataset")
 		plt.xlabel("k")
+		plt.xticks(np.arange(1, 11, step=1))
+		plt.yticks(np.arange(0, 0.75, step=0.05))
 		plt.legend(bbox_to_anchor=(1.04, 0.5), 
 				   loc="center left", 
 				   borderaxespad=0)
-		plt.savefig(f"{args.out_folder}vsm_lsa_comparison_plot.png",
+		plt.savefig(f"{args.out_folder}vsm_lsa_comparison.png",
 					bbox_inches="tight")
 		plt.show()
 
-		
-	def handleCustomQuery(self):
-		"""
-		Take a custom query as input and return top five relevant documents
-		"""
-
-		#Get query
-		print("Enter query below")
-		query = input()
-		# Process documents
-		processedQuery = self.preprocessQueries([query])[0]
-		print("queries pre-preprocessed!")
-
-		# Read documents
-		docs_json = json.load(open(f"{args.dataset}cran_docs.json", 'r'))
-		doc_ids, docs = [item["id"] for item in docs_json], \
-						[item["body"] for item in docs_json]
-		# Process documents
-		processedDocs = self.preprocessDocs(docs)
-		print("docs pre-preprocessed!")
-
-		# Build document index
-		self.informationRetriever.buildIndexWithSVD(processedDocs, doc_ids, n_comp=350)
-		# Rank the documents for the query
-		doc_IDs_ordered = self.informationRetriever.rank([processedQuery])[0]
-
-		# Print the IDs of first five documents
-		print("\nTop five document IDs : ")
-		for id in doc_IDs_ordered[:5]:
-			print(id)
-
-
+	
 if __name__ == "__main__":
 
 	# Create an argument parser
@@ -274,19 +248,9 @@ if __name__ == "__main__":
 	                    help = "Sentence Segmenter Type [naive|punkt]")
 	parser.add_argument('-tokenizer',  default = "ptb",
 	                    help = "Tokenizer Type [naive|ptb]")
-	parser.add_argument('-custom', action = "store_true", 
-						help = "Take custom query as input")
 	parser.add_argument("-spellcheck", action="store_true",
 						help = "Use SpellCheck ")
 	
-	# Parse the input arguments
 	args = parser.parse_args()
+	SearchEngine(args).evaluateDataset()
 
-	# Create an instance of the Search Engine
-	searchEngine = SearchEngine(args)
-
-	# Either handle query from user or evaluate on the complete dataset 
-	if args.custom:
-		searchEngine.handleCustomQuery()
-	else:
-		searchEngine.evaluateDataset()
