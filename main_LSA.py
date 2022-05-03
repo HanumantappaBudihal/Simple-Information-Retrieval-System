@@ -9,6 +9,7 @@ from multiprocessing import cpu_count
 from joblib import delayed, Parallel
 import argparse
 import json
+from time import time
 import matplotlib.pyplot as plt
 
 
@@ -205,7 +206,7 @@ class SearchEngine:
 
 
 if __name__ == "__main__":
-
+	start = time()
 	# Create an argument parser
 	parser = argparse.ArgumentParser(description='main.py')
 
@@ -228,9 +229,10 @@ if __name__ == "__main__":
 
 	# Create an instance of the Search Engine
 	searchEngine = SearchEngine(args)
-
+	
 	# Either handle query from user or evaluate on the complete dataset 
 	if args.custom:
 		searchEngine.handleCustomQuery()
 	else:
 		searchEngine.evaluateDataset()
+	print(f"runtime for LSA: {(time() - start):.4f}s")

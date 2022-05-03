@@ -4,7 +4,7 @@ from numpy.linalg import norm
 class InformationRetrieval():
 
     def __init__(self):
-        self.index = None
+        self.matrix = None
 
     def buildIndexWithSVD(self, docs, docIDs, n_comp=750):
         """
@@ -38,7 +38,7 @@ class InformationRetrieval():
 
         unique_words = list(set(words))
         postings = dict((v, k) for (k, v) in enumerate(unique_words))
-        index = np.zeros((len(unique_words), N))
+        matrix = np.zeros((len(unique_words), N))
 
         for idx in docIDs:
             for sent in docs[idx]:
@@ -46,27 +46,27 @@ class InformationRetrieval():
                     word = word.lower()
                     if '-' in word:
                         for w in word.split('-'):
-                            index[postings[w]][idx] += 1
+                            matrix[postings[w]][idx] += 1
                     else:
-                        index[postings[word]][idx] += 1
+                        matrix[postings[word]][idx] += 1
 
         # compute idf with smoothening
         idf = np.zeros(len(unique_words))
         for i, word in enumerate(unique_words):
-            n = index[postings[word]].sum()
+            n = matrix[postings[word]].sum()
             idf[i] = np.log((N + 1)/(n + 1)) + 1
 
         idf = idf.reshape(-1, 1)
-        index *= idf
+        matrix *= idf
 
         self.k = n_comp
-        U, s, Vt = np.linalg.svd(index)
-        index_recon = np.linalg.multi_dot([U[:, :self.k], np.diag(s[:self.k]), Vt[:self.k]])
+        U, s, Vt = np.linalg.svd(matrix)
+        matrix_recon = np.linalg.multi_dot([U[:, :self.k], np.diag(s[:self.k]), Vt[:self.k]])
 
         self.docIDs = docIDs
         self.idf = idf
         self.unique_words = unique_words
-        self.index = index_recon
+        self.matrix = matrix_recon
         self.postings = postings
 
 
@@ -87,28 +87,25 @@ class InformationRetrieval():
                 A list of lists of integers where the ith sub-list is a list of IDs
                 of documents in their predicted order of relevance to the ith query
         """
-        doc_IDs_ordered = []
-        for query in queries:
-            q_vec = np.zeros(len(self.unique_words))
-
+        q_mat = np.zeros((len(self.unique_words), len(queries)))
+        for i, query in enumerate(queries):
             for sent in query:
                 for word in sent:
                     if '-' in word:
                         for w in word.split('-'):
-                            if w in self.postings:
-                                q_vec[self.postings[w]] += 1
+                            try:
+                                q_mat[self.postings[w]][i] += 1
+                            except KeyError:
+                                pass
                     else:
-                        if word in self.postings:
-                            q_vec[self.postings[word]] += 1
+                        try:
+                            q_mat[self.postings[word]][i] += 1
+                        except KeyError:
+                            pass
 
-            q_vec = q_vec.reshape(-1, 1)
-            q_vec *= self.idf
-
-            dot_prod = np.dot(q_vec.T, self.index)
-            norms_prod = (norm(q_vec) * np.array([norm(v) for v in self.index.T])) + 1e-8
-            cos_sim = dot_prod / norms_prod
-
-            retrieved_docs = np.squeeze(np.argsort(cos_sim, kind="mergesort"), axis=0) + 1
-            doc_IDs_ordered.append(retrieved_docs.tolist()[::-1])
-
-        return doc_IDs_ordered
+        q_mat *= self.idf
+        q_norms = np.array([np.linalg.norm(q) for q in q_mat.T])
+        d_norms = np.array([np.linalg.norm(d) for d in self.matrix.T])
+        norms_prod = np.outer(q_norms, d_norms)
+        sim = np.dot(q_mat.T, self.matrix) / (norms_prod + 1e-8)
+        return np.flip(np.argsort(sim, axis=1, kind="mergesort")+1, axis=1)

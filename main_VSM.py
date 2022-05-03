@@ -8,8 +8,8 @@ from multiprocessing import cpu_count
 from joblib import delayed, Parallel
 import argparse
 import json
+from time import time
 import matplotlib.pyplot as plt
-
 
 n_jobs = cpu_count()
 print(f"parallelizing on {n_jobs} cores")
@@ -195,7 +195,7 @@ class SearchEngine:
 
 
 if __name__ == "__main__":
-
+	start = time()
 	# Create an argument parser
 	parser = argparse.ArgumentParser(description='main.py')
 
@@ -222,3 +222,4 @@ if __name__ == "__main__":
 		searchEngine.handleCustomQuery()
 	else:
 		searchEngine.evaluateDataset()
+	print(f"runtime for VSM: {(time() - start):.4f}s")
