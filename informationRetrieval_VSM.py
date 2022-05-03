@@ -1,7 +1,7 @@
 import numpy as np
 from sys import exit
 
-class InformationRetrieval():
+class InformationRetrieval:
 
     def __init__(self):
         self.idf = []

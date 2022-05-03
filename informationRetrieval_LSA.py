@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.linalg import norm
 
-class InformationRetrieval():
+class InformationRetrieval:
 
     def __init__(self):
         self.matrix = None
@@ -25,7 +25,7 @@ class InformationRetrieval():
         N = len(docIDs)
         for i in range(N):
             docIDs[i] -= 1
-        
+
         words = []
         for doc in docs:
             for sent in doc:
@@ -59,9 +59,8 @@ class InformationRetrieval():
         idf = idf.reshape(-1, 1)
         matrix *= idf
 
-        self.k = n_comp
         U, s, Vt = np.linalg.svd(matrix)
-        matrix_recon = np.linalg.multi_dot([U[:, :self.k], np.diag(s[:self.k]), Vt[:self.k]])
+        matrix_recon = np.linalg.multi_dot([U[:, :n_comp], np.diag(s[:n_comp]), Vt[:n_comp]])
 
         self.docIDs = docIDs
         self.idf = idf
