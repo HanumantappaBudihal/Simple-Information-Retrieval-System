@@ -9,8 +9,8 @@ from multiprocessing import cpu_count
 from joblib import delayed, Parallel
 import argparse
 import json
-from time import time
 import matplotlib.pyplot as plt
+plt.style.use("ggplot")
 
 
 n_jobs = cpu_count()
@@ -170,8 +170,10 @@ class SearchEngine:
 		plt.plot(range(1, 11), nDCGs, label="nDCG")
 		plt.title("Evaluation Metrics - Cranfield Dataset")
 		plt.xlabel("k")
-		plt.legend()
-		plt.savefig(f"{args.out_folder}eval_plot.png")
+		plt.legend(bbox_to_anchor=(1.04, 0.5), 
+				   loc="center left", 
+				   borderaxespad=0)
+		plt.savefig(f"{args.out_folder}eval_plot_LSA.png")
 
 		
 	def handleCustomQuery(self):
@@ -235,4 +237,3 @@ if __name__ == "__main__":
 		searchEngine.handleCustomQuery()
 	else:
 		searchEngine.evaluateDataset()
-	print(f"runtime for LSA: {(time() - start):.4f}s")

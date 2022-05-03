@@ -160,10 +160,10 @@ class SearchEngine:
 
 		print(f"best nDCG @ 10: {best_nDCG}, best_n_comp: {best_n_comp}")
 		plt.plot(range(50, doc_ids[-1], 50), nDCGs, linestyle="dashed", marker='o')
-		plt.title("nDCG for varying n_comp - Cranfield Dataset")
+		plt.title("nDCG for varying n_comp (with spellcheck) - Cranfield Dataset")
 		plt.xlabel("n_comp")
 		plt.ylabel("nDCG @ 10")
-		plt.savefig(f"{args.out_folder}nDCG @ 10.png")
+		plt.savefig(f"{args.out_folder}nDCG @ 10_with_spellcheck.png")
 		plt.show()
 
 		#---------------------------------------------------------------------------------------------------------------------------#
@@ -222,14 +222,14 @@ class SearchEngine:
 		plt.plot(range(1, 11), MAPs_lsa, label="MAP_LSA", color='m')
 		plt.plot(range(1, 11), nDCGs_vsm, label="nDCG_VSM", linestyle="dashed", color='k')
 		plt.plot(range(1, 11), nDCGs_lsa, label="nDCG_LSA", color='k')
-		plt.title("VSM vs LSA - Evaluation Metrics - Cranfield Dataset")
+		plt.title("VSM vs LSA - Evaluation Metrics (with spellcheck) - Cranfield Dataset")
 		plt.xlabel("k")
 		plt.xticks(np.arange(1, 11, step=1))
 		plt.yticks(np.arange(0, 0.75, step=0.05))
 		plt.legend(bbox_to_anchor=(1.04, 0.5), 
 				   loc="center left", 
 				   borderaxespad=0)
-		plt.savefig(f"{args.out_folder}vsm_lsa_comparison.png",
+		plt.savefig(f"{args.out_folder}vsm_lsa_comparison_with_spellcheck.png",
 					bbox_inches="tight")
 		plt.show()
 
