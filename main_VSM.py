@@ -21,7 +21,7 @@ class SearchEngine:
 		self.args = args
 		self.tokenizer = Tokenization()
 		self.sentenceSegmenter = SentenceSegmentation()
-		self.inflectionReducer = InflectionReduction()
+		self.inflectionReducer = InflectionReduction(algo=self.args.algo)
 		self.stopwordRemover = StopwordRemoval()
 		self.informationRetriever = InformationRetrieval()
 		self.evaluator = Evaluation()
@@ -162,7 +162,8 @@ class SearchEngine:
 		plt.legend(bbox_to_anchor=(1.04, 0.5), 
 				   loc="center left", 
 				   borderaxespad=0)
-		plt.savefig(f"{args.out_folder}eval_plot_VSM.png")
+		plt.savefig(f"{args.out_folder}eval_plot_VSM.png",
+					bbox_inches="tight")
 
 		
 	def handleCustomQuery(self):
@@ -209,6 +210,8 @@ if __name__ == "__main__":
 	                    help = "Sentence Segmenter Type [naive|punkt]")
 	parser.add_argument('-tokenizer',  default = "ptb",
 	                    help = "Tokenizer Type [naive|ptb]")
+	parser.add_argument('-algo', default = "lemmatizer",
+					    help = "Reducer Type [lemmatizer|stemmer]")
 	parser.add_argument('-custom', action = "store_true", 
 						help = "Take custom query as input")
 	

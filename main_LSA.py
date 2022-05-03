@@ -23,7 +23,7 @@ class SearchEngine:
 		self.args = args
 		self.tokenizer = Tokenization()
 		self.sentenceSegmenter = SentenceSegmentation()
-		self.inflectionReducer = InflectionReduction()
+		self.inflectionReducer = InflectionReduction(algo = self.args.algo)
 		self.stopwordRemover = StopwordRemoval()
 		self.informationRetriever = InformationRetrieval()
 		self.spellCheck = SpellCheck()
@@ -87,7 +87,7 @@ class SearchEngine:
 		# remove stop words 
 		queries = Parallel(n_jobs=n_jobs)(delayed(self.removeStopwords)(query) for query in queries)
 		json.dump(queries, open(f"{self.args.out_folder}stopword_removed_queries.txt", 'w'))
-	
+		
 		return queries
 
 
@@ -173,7 +173,8 @@ class SearchEngine:
 		plt.legend(bbox_to_anchor=(1.04, 0.5), 
 				   loc="center left", 
 				   borderaxespad=0)
-		plt.savefig(f"{args.out_folder}eval_plot_LSA.png")
+		plt.savefig(f"{args.out_folder}eval_plot_LSA.png",
+					bbox_inches="tight")
 
 		
 	def handleCustomQuery(self):
@@ -208,7 +209,6 @@ class SearchEngine:
 
 
 if __name__ == "__main__":
-	start = time()
 	# Create an argument parser
 	parser = argparse.ArgumentParser(description='main.py')
 
@@ -223,6 +223,8 @@ if __name__ == "__main__":
 	                    help = "Tokenizer Type [naive|ptb]")
 	parser.add_argument('-custom', action = "store_true", 
 						help = "Take custom query as input")
+	parser.add_argument('-algo', default = "lemmatizer",
+					    help = "Reducer Type [lemmatizer|stemmer]")
 	parser.add_argument("-spellcheck", action="store_true",
 						help = "Use SpellCheck ")
 	
