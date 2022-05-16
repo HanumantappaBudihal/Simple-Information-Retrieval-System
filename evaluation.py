@@ -305,7 +305,7 @@ class Evaluation():
                 doc_ID = int(query_doc_IDs_ordered[i-1])
                 if doc_ID in rel_docs:
                     relevance = rel_vals[doc_ID]
-                    DCGk += (2 ** relevance - 1) / log2(i+1)
+                    DCGk += (2**relevance - 1) / log2(i+1)
 
             ordered_vals = sorted(rel_vals.values(), reverse=True)
             num_docs = len(ordered_vals)

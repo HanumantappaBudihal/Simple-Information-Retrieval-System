@@ -39,7 +39,8 @@ class InformationRetrieval:
         unique_words = list(set(words))
         postings = dict((v, k) for (k, v) in enumerate(unique_words))
         matrix = np.zeros((len(unique_words), N))
-
+        
+        
         for idx in docIDs:
             for sent in docs[idx]:
                 for word in sent:
@@ -59,13 +60,18 @@ class InformationRetrieval:
         idf = idf.reshape(-1, 1)
         matrix *= idf
 
+        # checkdoc, w1, w2 = 367, "aeroplane", "flight"
+        # print(matrix[postings[w1]][checkdoc], matrix[postings[w2]][checkdoc])
+
         U, s, Vt = np.linalg.svd(matrix)
-        matrix_recon = np.linalg.multi_dot([U[:, :n_comp], np.diag(s[:n_comp]), Vt[:n_comp]])
+        matrix = np.linalg.multi_dot([U[:, :n_comp], np.diag(s[:n_comp]), Vt[:n_comp]])
+
+        # print(matrix[postings[w1]][checkdoc], matrix[postings[w2]][checkdoc])
 
         self.docIDs = docIDs
         self.idf = idf
         self.unique_words = unique_words
-        self.matrix = matrix_recon
+        self.matrix = matrix
         self.postings = postings
 
 
